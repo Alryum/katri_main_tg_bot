@@ -44,56 +44,35 @@ async def orders_init(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-# @wb_fsm_router.message(WildberriesProcessState.show_orders)
-# async def show_orders(message: types.Message, state: FSMContext):
-#     anchor_order_id = await get_anchor_order_id()
-#     async with get_db_session() as session:
-#         result = (
-#             await session.execute(
-#                 select(WildberriesOrderItem)
-#                 .options(
-#                     selectinload(WildberriesOrderItem.product)
-#                 )
-#                 .filter_by(is_complete=False, product_id=anchor_order_id)
-#                 .join(WildberriesProduct, WildberriesOrderItem.product_id == WildberriesProduct.id)
-#                 .order_by(asc(WildberriesProduct.category), asc(WildberriesProduct.article))
-#             )
-#         )
-
-#         products_list = result.scalars().all()
-#     if not products_list:
-#         builder = inline_menu_keyboard()
-#         await state.clear()
-#         await message.answer('Все заказы были собраны.', reply_markup=builder.as_markup())
-
-#     products_barcodes = [p.product.barcode for p in islice(products_list, 3)]
-#     data = {
-#         'barcodes': products_barcodes,
-#         'orders_ids': [int(p.order_id) for p in products_list],
-#         'product_id': products_list[0].product.id,
-#         'total_amount': len(products_list),
-#         'article': products_list[0].product.article,
-#     }
-#     await state.update_data(data)
-
-#     session = await SingletoneSession.get_session()
-#     prod = products_list[0].product
-#     mp_katri_web = MpKatriProApi(session)
-#     current_stock = await mp_katri_web.get_current_product_balance(prod.barcode)
-#     m = f'''
-# Штрих-код: {prod.barcode}
-# Артикул: {prod.article}
-# Категория: {prod.category}
-
-# *{current_stock}*
-
-# *Количество: {len(products_list)}*
-# '''
-#     barcode_stock_k_builder = wb_print_barcode_keyboard(
-#         products_list[0].product.id, len(products_list), prod.barcode)
-#     await message.answer_photo(prod.photo, m, parse_mode='MARKDOWN', reply_markup=barcode_stock_k_builder.as_markup())
-#     logging.log(logging.INFO, m)
-#     await state.set_state(WildberriesProcessState.input_barcodes)
+@wb_fsm_router.message(WildberriesProcessState.show_orders)
+async def show_orders(message: types.Message, state: FSMContext):
+    session = await SingletoneSession.get_session()
+    wb_api = WildberriesBackendAPI(session)
+    orders_list = await wb_api.get_orders()
+    if orders_list == 404:
+        await message.answer('Все заказы были собраны')
+        await state.clear()
+        return
+    orders_ids = [i['order_id'] for i in orders_list]
+    barcodes = [i['barcodes'] for i in islice(orders_list, 3)]
+    await state.update_data(
+        {
+            'orders_ids': orders_ids,
+            'barcodes': barcodes,
+            'total_amount': len(orders_list),
+            'product_id': orders_list[0]['product']['id'],
+            'article': orders_list[0]['product']['article'],
+        }
+    )
+    m = f'''
+Штрих-код: {barcodes[0]}
+Артикул: {orders_list[0]['product']['article']}
+Категория: {orders_list[0]['product']['category']}
+*Количество: {len(orders_list)}*
+'''
+    await message.answer_photo(orders_list[0]['product']['photo'], m, parse_mode='MARKDOWN')
+    logging.log(logging.INFO, m)
+    await state.set_state(WildberriesProcessState.input_barcodes)
 
 
 # @wb_fsm_router.message(WildberriesProcessState.input_barcodes)

@@ -82,6 +82,18 @@ class WildberriesBackendAPI:
             response_json = await response.json()
             task_status = response_json['status']
             return task_status
+        
+    async def get_orders(self):
+        URL = f'{self.BASE_URL}/api/v1/wildberries/orders/'
+        async with self.session.get(url=URL, headers=self.HEADERS) as response:
+            if response.status == 404:
+                return 404
+            if response.status not in [404, 200, 201]:
+                text = await response.text()
+                logging.log(logging.ERROR, f'Ошибка получения заказов {response.status}: {text}')
+                print(f'Ошибка запроса {response.status}, создан лог')
+                return
+            return await response.json()
 
 
 class WbQrCode:

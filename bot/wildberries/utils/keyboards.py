@@ -9,8 +9,8 @@ def wb_menu_keyboard() -> InlineKeyboardBuilder:
         callback_data='load_wb_orders'),
     )
     builder.add(InlineKeyboardButton(
-        text='🟦 TBA',
-        callback_data='testquery'),
+        text='🟦 Получить текущий заказ',
+        callback_data='get_next_wb_order'),
     )
     builder.add(InlineKeyboardButton(
         text='🦖 TBA',
