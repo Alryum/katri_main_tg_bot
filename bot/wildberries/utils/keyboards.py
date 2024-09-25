@@ -18,3 +18,13 @@ def wb_menu_keyboard() -> InlineKeyboardBuilder:
     )
     builder.adjust(1)
     return builder
+
+
+def wb_next_inline_keyboard() -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(
+        text='🟦 Следующий заказ',
+        callback_data='get_next_wb_order'),
+    )
+    builder.adjust(1)
+    return builder

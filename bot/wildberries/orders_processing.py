@@ -5,18 +5,8 @@ from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from bot.common.session import SingletoneSession
-from bot.wildberries.utils.request_utils import WildberriesBackendAPI
-
-# from bot.common.request_utils import increment_orders_stat
-# from bot.common.sessions import SingletoneSession, get_db_session
-# from bot.common.keyboards import inline_menu_keyboard, next_keyboard
-# from bot.stocks.requests_utils import MpKatriProApi
-# from bot.wildberries.keyboards import wb_print_barcode_keyboard, wb_reprint_keyboard
-# from bot.wildberries.models import WildberriesOrderItem, WildberriesProduct
-# from bot.wildberries.utils.common import skip_wb_orders
-# from bot.wildberries.utils.db_requests import get_anchor_order_id
-# from bot.wildberries.utils.orders import WildberriesOrdersManager
-# from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
+from bot.wildberries.utils.keyboards import wb_next_inline_keyboard
+from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
 
 wb_fsm_router = Router()
 
@@ -75,45 +65,27 @@ async def show_orders(message: types.Message, state: FSMContext):
     await state.set_state(WildberriesProcessState.input_barcodes)
 
 
-# @wb_fsm_router.message(WildberriesProcessState.input_barcodes)
-# async def input_barcodes(message: types.Message, state: FSMContext):
-#     data = await state.get_data()
-#     barcodes: List[str] = data['barcodes']
-#     msg = message.text.strip()
-#     if msg in barcodes:
-#         barcodes.remove(msg)
-#         await state.update_data(barcodes=barcodes)
-#         await message.reply('✅')
-#         if not barcodes:
-#             http_session = await SingletoneSession.get_session()
-#             await WbQrCode(http_session).print_pdf_sticker(data['orders_ids'], data['article'])
-#             async with get_db_session() as session:
-#                 await session.execute(
-#                     update(WildberriesOrderItem)
-#                     .where(WildberriesOrderItem.product_id == data['product_id'])
-#                     .values(is_complete=True)
-#                 )
-#                 await session.commit()
-#             builder = wb_reprint_keyboard(data['product_id'])
-#             await message.answer(f'Заказ выполнен', reply_markup=builder.as_markup())
-#             logging.log(logging.INFO, f'Заказ выполнен. POSTING NUMBER:')
-#             async with get_db_session() as session:
-#                 incomplete_prods_count = await session.execute(
-#                     select(func.count()).where(WildberriesOrderItem.is_complete == False)
-#                 )
-#                 incomplete_prods_count = incomplete_prods_count.scalar()
-#             s = await SingletoneSession.get_session()
-#             if not await increment_orders_stat('wildberries', data['total_amount'], s):
-#                 await message.answer(f'Ошибка при обновлении статистики')
-#             remain_msg = await message.answer(f'Осталось обработать товаров {incomplete_prods_count}', reply_markup=next_keyboard())
-#             if not incomplete_prods_count:
-#                 builder = inline_menu_keyboard()
-#                 await remain_msg.edit_text('Сборка закончена 🗿', reply_markup=builder.as_markup())
-#                 await state.clear()
-#                 return
-#             await state.set_state(WildberriesProcessState.show_orders)
-#     else:
-#         await message.reply('Такого штрих-кода в списке нет')
+@wb_fsm_router.message(WildberriesProcessState.input_barcodes)
+async def input_barcodes(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    barcodes: List[str] = data['barcodes']
+    msg = message.text.strip()
+    if msg in barcodes:
+        barcodes.remove(msg)
+        await state.update_data(barcodes=barcodes)
+        await message.reply('✅')
+        if not barcodes:
+            session = await SingletoneSession.get_session()
+            wb_api = WildberriesBackendAPI(session)
+            list_of_stickers = await wb_api.complete_orders_and_get_stickers(data['orders_ids'])
+            WbQrCode().print_pdf_sticker(list_of_stickers, data['article'])
+            builder = wb_next_inline_keyboard()
+            await message.answer(f'Заказ выполнен', reply_markup=builder.as_markup())
+            logging.log(logging.INFO, f'Заказ выполнен.')
+            # remain_msg = await message.answer(f'Осталось обработать товаров {incomplete_prods_count}', reply_markup=next_keyboard())
+            await state.clear()
+    else:
+        await message.reply('Такого штрих-кода в списке нет')
 
 
 # @wb_fsm_router.message(WildberriesProcessState.input_barcode_for_skip)

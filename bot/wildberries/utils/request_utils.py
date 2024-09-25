@@ -82,7 +82,7 @@ class WildberriesBackendAPI:
             response_json = await response.json()
             task_status = response_json['status']
             return task_status
-        
+
     async def get_orders(self):
         URL = f'{self.BASE_URL}/api/v1/wildberries/orders/'
         async with self.session.get(url=URL, headers=self.HEADERS) as response:
@@ -95,34 +95,22 @@ class WildberriesBackendAPI:
                 return
             return await response.json()
 
-
-class WbQrCode:
-    def __init__(self, session: aiohttp.ClientSession) -> None:
-        self.session = session
-
-    async def get(self, list_of_order_ids: list) -> List[Dict[str, Any]]:
-        URL = 'https://marketplace-api.wildberries.ru/api/v3/orders/stickers'
-        HEADERS = ''
-        params = {
-            'type': 'png',
-            'width': 58,
-            'height': 40,
-        }
-        if not list_of_order_ids:
-            raise Exception(f'Передан пустой список')
-        data_json = json.dumps({'orders': list_of_order_ids, })
-        async with self.session.post(url=URL, headers=HEADERS, params=params, data=data_json) as response:
+    async def complete_orders_and_get_stickers(self, orders_ids: list):
+        URL = f'{self.BASE_URL}/api/v1/wildberries/orders/'
+        data = {'ids': orders_ids}
+        async with self.session.post(url=URL, headers=self.HEADERS, json=data) as response:
             if response.status != 200:
                 text = await response.text()
-                raise Exception(f'Ошибка запроса стикеров WB {response.status}: {text}')
-            response_json = await response.json()
-            return response_json['stickers']
+                logging.log(logging.ERROR, f'Ошибка запроса на получение стикеров {
+                            response.status}: {text}')
+                print(f'Ошибка запроса {response.status}, создан лог')
+                return
+            stickers_response = await response.json()
+            return stickers_response['stickers']
 
-    async def print_pdf_sticker(self, list_of_order_ids: list, article) -> None:
-        '''
-        Печатает pdf стикер
-        '''
-        list_of_stickers = await self.get(list_of_order_ids)
+
+class WbQrCode:
+    def print_pdf_sticker(self, list_of_stickers: list, article) -> None:
         for sticker in list_of_stickers:
             sticker_base_64 = sticker['file']
             img_binary = base64.b64decode(sticker_base_64)
