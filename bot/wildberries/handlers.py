@@ -41,6 +41,10 @@ async def wb_get_next_order_callback(callback: types.CallbackQuery, state: FSMCo
         await callback.message.answer('Все заказы были собраны')
         await state.clear()
         return
+    if orders_list == 402:
+        await callback.message.answer('Подписка не активна, запрос отклонен')
+        await state.clear()
+        return
     orders_ids = [i['order_id'] for i in orders_list]
     barcodes = [i['product']['barcode'] for i in islice(orders_list, 3)]
     await state.update_data(

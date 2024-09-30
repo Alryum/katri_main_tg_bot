@@ -88,6 +88,8 @@ class WildberriesBackendAPI:
         async with self.session.get(url=URL, headers=self.HEADERS) as response:
             if response.status == 404:
                 return 404
+            if response.status == 402:
+                return 402
             if response.status not in [404, 200, 201]:
                 text = await response.text()
                 logging.log(logging.ERROR, f'Ошибка получения заказов {response.status}: {text}')
