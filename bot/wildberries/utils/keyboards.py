@@ -28,3 +28,12 @@ def wb_next_inline_keyboard() -> InlineKeyboardBuilder:
     )
     builder.adjust(1)
     return builder
+
+def wb_reprint_keyboard(id: int) -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(
+        text='🌌 Перепечатать заказ',
+        callback_data=f'repr_w {id}'),
+    )
+    builder.adjust(1)
+    return builder

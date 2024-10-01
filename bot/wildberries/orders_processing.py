@@ -5,7 +5,7 @@ from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from bot.common.session import SingletoneSession
-from bot.wildberries.utils.keyboards import wb_next_inline_keyboard
+from bot.wildberries.utils.keyboards import wb_next_inline_keyboard, wb_reprint_keyboard
 from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
 
 wb_fsm_router = Router()
@@ -79,8 +79,10 @@ async def input_barcodes(message: types.Message, state: FSMContext):
             wb_api = WildberriesBackendAPI(session)
             list_of_stickers = await wb_api.complete_orders_and_get_stickers(data['orders_ids'])
             WbQrCode().print_pdf_sticker(list_of_stickers, data['article'])
-            builder = wb_next_inline_keyboard()
-            await message.answer(f'Заказ выполнен', reply_markup=builder.as_markup())
+            wb_next_builder = wb_next_inline_keyboard()
+            reprint_builder = wb_reprint_keyboard(data['product_id'])
+            await message.answer(f'Перепечатать {data['article']}', reply_markup=reprint_builder.as_markup())
+            await message.answer(f'Заказ {data['article']} выполнен', reply_markup=wb_next_builder.as_markup())
             logging.log(logging.INFO, f'Заказ выполнен.')
             # remain_msg = await message.answer(f'Осталось обработать товаров {incomplete_prods_count}', reply_markup=next_keyboard())
             await state.clear()

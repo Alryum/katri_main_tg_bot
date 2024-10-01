@@ -8,7 +8,7 @@ import logging
 from bot.common.session import SingletoneSession
 from bot.wildberries.orders_processing import WildberriesProcessState
 from bot.wildberries.utils.keyboards import wb_menu_keyboard
-from bot.wildberries.utils.request_utils import WildberriesBackendAPI
+from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
 
 wb_handlers_router = Router()
 
@@ -67,19 +67,21 @@ async def wb_get_next_order_callback(callback: types.CallbackQuery, state: FSMCo
     await state.set_state(WildberriesProcessState.input_barcodes)
 
 
-# @wb_router.callback_query(F.data == 'regenerate_table_wb')
-# async def wb_regen_orders_callback(callback: types.CallbackQuery, state: FSMContext) -> None:
-#     '''
-#     Регенерация таблицы заказов WB
-#     '''
-#     await state.clear()
-#     logging.log(logging.INFO, 'Регенерация таблицы заказов')
-#     session = await SingletoneSession.get_session()
-#     await WildberriesOrdersManager().clear_db()
-#     await callback.message.answer(f'ВАЖНО: Убедитесь, что вы добавили все нужные товары в сборочное задание. Их можно добавить сейчас, до ввода номера поставки. После ввода номера бот соберет заказы из поставки.')
-#     await callback.message.answer('Введите номер поставки (только цифры)')
-#     await state.set_state(WildberriesProcessState.orders_init)
-#     await callback.answer()
+@wb_handlers_router.callback_query(lambda callback: any(x in callback.data for x in ['repr_o', 'repr_y', 'repr_w']))
+async def reprint_wb_order_callback(callback: types.CallbackQuery, state: FSMContext) -> None:
+    data = callback.data.split()
+    operation_type = data[0]  # тип операции repr_o, repr_y
+    id = int(data[1])  # id заказа в БД (pk)
+    if operation_type == 'repr_w':
+        logging.log(logging.INFO, f'Перепечать заказа WB {id}')
+        session = await SingletoneSession.get_session()
+        wb_api = WildberriesBackendAPI(session)
+        response = await wb_api.reprint_orders(id=id)
+        stickers_list = response['stickers']
+        article = response['article']
+        WbQrCode().print_pdf_sticker(stickers_list, article=article)
+        await callback.message.answer('Заказы перепечатываются')
+    await callback.answer()
 
 
 # @wb_router.callback_query(F.data == 'skip_orders_wb')
