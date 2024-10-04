@@ -121,6 +121,18 @@ class WildberriesBackendAPI:
                 return
             return await response.json()
 
+    async def get_products(self, id: int):
+        URL = f'{self.BASE_URL}/api/v1/wildberries/products/{id}/'
+        async with self.session.get(url=URL, headers=self.HEADERS) as response:
+            if response.status != 200:
+                text = await response.text()
+                logging.log(logging.ERROR, f'Ошибка запроса на получение товаров {
+                            response.status}: {text}')
+                print(f'Ошибка запроса {response.status}, создан лог')
+                return response.status
+            return await response.json()
+
+
 class WbQrCode:
     def print_pdf_sticker(self, list_of_stickers: list, article) -> None:
         for sticker in list_of_stickers:

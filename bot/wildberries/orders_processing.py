@@ -1,5 +1,4 @@
 import logging
-from itertools import islice
 from typing import List
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
@@ -32,37 +31,6 @@ async def orders_init(message: types.Message, state: FSMContext):
     if is_done:
         await out_msg.edit_text('Загрузка завершена ✅')
     await state.clear()
-
-
-@wb_fsm_router.message(WildberriesProcessState.show_orders)
-async def show_orders(message: types.Message, state: FSMContext):
-    session = await SingletoneSession.get_session()
-    wb_api = WildberriesBackendAPI(session)
-    orders_list = await wb_api.get_orders()
-    if orders_list == 404:
-        await message.answer('Все заказы были собраны')
-        await state.clear()
-        return
-    orders_ids = [i['order_id'] for i in orders_list]
-    barcodes = [i['barcodes'] for i in islice(orders_list, 3)]
-    await state.update_data(
-        {
-            'orders_ids': orders_ids,
-            'barcodes': barcodes,
-            'total_amount': len(orders_list),
-            'product_id': orders_list[0]['product']['id'],
-            'article': orders_list[0]['product']['article'],
-        }
-    )
-    m = f'''
-Штрих-код: {barcodes[0]}
-Артикул: {orders_list[0]['product']['article']}
-Категория: {orders_list[0]['product']['category']}
-*Количество: {len(orders_list)}*
-'''
-    await message.answer_photo(orders_list[0]['product']['photo'], m, parse_mode='MARKDOWN')
-    logging.log(logging.INFO, m)
-    await state.set_state(WildberriesProcessState.input_barcodes)
 
 
 @wb_fsm_router.message(WildberriesProcessState.input_barcodes)

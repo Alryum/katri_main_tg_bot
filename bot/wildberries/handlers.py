@@ -7,7 +7,7 @@ import logging
 
 from bot.common.session import SingletoneSession
 from bot.wildberries.orders_processing import WildberriesProcessState
-from bot.wildberries.utils.keyboards import wb_menu_keyboard
+from bot.wildberries.utils.keyboards import wb_menu_keyboard, wb_print_barcode
 from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
 
 wb_handlers_router = Router()
@@ -62,7 +62,8 @@ async def wb_get_next_order_callback(callback: types.CallbackQuery, state: FSMCo
 Категория: {orders_list[0]['product']['category']}
 *Количество: {len(orders_list)}*
 '''
-    await callback.message.answer_photo(orders_list[0]['product']['photo'], m, parse_mode='MARKDOWN')
+    builder = wb_print_barcode(orders_list[0]['product']['id'], len(orders_list))
+    await callback.message.answer_photo(orders_list[0]['product']['photo'], m, parse_mode='MARKDOWN', reply_markup=builder.as_markup())
     logging.log(logging.INFO, m)
     await state.set_state(WildberriesProcessState.input_barcodes)
 
