@@ -2,6 +2,9 @@
 bot/logs/*
 !bot/logs/.gitkeep
 
+bot/common/temp/*
+!bot/common/temp/.gitkeep
+
 # Django #
 *.log
 *.pot
