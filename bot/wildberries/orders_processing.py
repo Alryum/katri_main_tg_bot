@@ -29,7 +29,8 @@ async def orders_init(message: types.Message, state: FSMContext):
     out_msg = await message.answer('Загрузка заказов')
     is_done = await wb_api.update_orders(msg)
     if is_done:
-        await out_msg.edit_text('Загрузка завершена ✅')
+        wb_next_builder = wb_next_inline_keyboard()
+        await out_msg.edit_text('Загрузка завершена ✅', reply_markup=wb_next_builder.as_markup())
     await state.clear()
 
 
