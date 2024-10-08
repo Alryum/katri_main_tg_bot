@@ -51,7 +51,7 @@ class WildberriesBackendAPI:
                 return
             response_json = await response.json()
             task_id = response_json['task_id']
-            return await self.ping_task_status(task_id, 10, 10, 'обновление товаров')
+            return await self.ping_task_status(task_id, 30, 10, 'обновление товаров')
 
     async def update_orders(self, supply_id):
         """supply_id только цифры"""

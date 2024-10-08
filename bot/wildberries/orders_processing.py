@@ -1,8 +1,10 @@
+import io
 import logging
 from typing import List
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from bot.common.photo_barcode import PhotoBarcodeParser
 from bot.common.session import SingletoneSession
 from bot.wildberries.utils.keyboards import wb_next_inline_keyboard, wb_reprint_keyboard
 from bot.wildberries.utils.request_utils import WbQrCode, WildberriesBackendAPI
@@ -38,7 +40,18 @@ async def orders_init(message: types.Message, state: FSMContext):
 async def input_barcodes(message: types.Message, state: FSMContext):
     data = await state.get_data()
     barcodes: List[str] = data['barcodes']
-    msg = message.text.strip()
+    msg = ''
+
+    if message.photo:
+        photo = message.photo[-1]
+        file_info = await message.bot.get_file(photo.file_id)
+        photo_file = io.BytesIO()
+        await message.bot.download_file(file_info.file_path, destination=photo_file)
+        photo_parser = PhotoBarcodeParser(photo_file)
+        msg = photo_parser.get_barcode()
+    else:
+        msg = message.text.strip()
+
     if msg in barcodes:
         barcodes.remove(msg)
         await state.update_data(barcodes=barcodes)
