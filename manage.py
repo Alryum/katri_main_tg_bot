@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
 
 from bot.common.session import SingletoneSession
+from bot.common.utils import remove_files_except_gitignore
 from bot.wildberries.utils.request_utils import WildberriesBackendAPI
 from bot.wildberries.handlers import wb_handlers_router
 from bot.wildberries.orders_processing import wb_fsm_router
@@ -21,6 +22,7 @@ async def main() -> None:
         wb_fsm_router,
     )
     print('Загрузка...')
+    remove_files_except_gitignore('bot/wildberries/temp/')
     bot = Bot(os.getenv('TG_API_KEY'))
     session = await SingletoneSession.get_session()
     wb_api = WildberriesBackendAPI(session)
