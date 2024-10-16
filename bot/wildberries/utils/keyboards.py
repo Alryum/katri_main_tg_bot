@@ -5,15 +5,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def wb_menu_keyboard() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(
-        text='🟪 Обновить заказы',
+        text='🔄 Обновить заказы',
         callback_data='load_wb_orders'),
     )
     builder.add(InlineKeyboardButton(
-        text='🟦 Получить текущий заказ',
+        text='⬇️ Получить текущий заказ',
         callback_data='get_next_wb_order'),
     )
     builder.add(InlineKeyboardButton(
-        text='🦖 TBA',
+        text='🦖 Остатки (в разработке)',
         callback_data='testquery'),
     )
     builder.adjust(1)

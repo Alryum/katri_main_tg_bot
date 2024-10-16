@@ -12,9 +12,5 @@ def inline_menu_keyboard() -> InlineKeyboardBuilder:
         text='🟦 Установить токен',
         callback_data='set_token'),
     )
-    builder.add(InlineKeyboardButton(
-        text='🦖 Остатки на складе',
-        callback_data='stocks'),
-    )
     builder.adjust(1)
     return builder
