@@ -43,6 +43,9 @@ class WildberriesBackendAPI:
     async def init_update_products(self) -> bool:
         URL = f'{self.BASE_URL}/api/v1/wildberries/sync_products/'
         async with self.session.get(url=URL, headers=self.HEADERS) as response:
+            if response.status == 402:
+                print('Подписка не активна, запрос отклонен')
+                return
             if response.status != 200:
                 text = await response.text()
                 logging.log(logging.ERROR, f'Ошибка запроса обновления товаров: {
