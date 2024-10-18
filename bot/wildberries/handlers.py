@@ -32,10 +32,16 @@ async def wb_menu_callback(callback: types.CallbackQuery, state: FSMContext) -> 
     await callback.message.answer('WB Menu', reply_markup=builder.as_markup())
     await callback.answer()
 
+
 @wb_handlers_router.callback_query(F.data == 'get_next_wb_order')
 async def wb_get_next_order_callback(callback: types.CallbackQuery, state: FSMContext) -> None:
     session = await SingletoneSession.get_session()
     wb_api = WildberriesBackendAPI(session)
+    try:
+        amount_of_uncomplete_orders = await wb_api.get_amount_of_uncomplete_orders()
+        await callback.message.answer(f'Осталось обработать заказов {amount_of_uncomplete_orders}')
+    except:
+        await callback.message.answer('Ошибка получения количества необработанных заказов')
     orders_list = await wb_api.get_orders()
     if orders_list == 404:
         await callback.message.answer('Все заказы были собраны')

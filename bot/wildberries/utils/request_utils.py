@@ -135,6 +135,18 @@ class WildberriesBackendAPI:
                 return response.status
             return await response.json()
 
+    async def get_amount_of_uncomplete_orders(self):
+        URL = f'{self.BASE_URL}/api/v1/wildberries/orders_count/'
+        async with self.session.get(url=URL, headers=self.HEADERS) as response:
+            if response.status != 200:
+                text = await response.text()
+                logging.log(logging.ERROR, f'Ошибка запроса на получение кол-во необработанных заказов {
+                            response.status}: {text}')
+                print(f'Ошибка запроса {response.status}, создан лог')
+                return response.status
+            response_json = await response.json()
+            return response_json['amount_of_uncomplete_orders']
+
 
 class WbQrCode:
     def print_pdf_sticker(self, list_of_stickers: list, article) -> None:

@@ -66,7 +66,6 @@ async def input_barcodes(message: types.Message, state: FSMContext):
             await message.answer(f'Перепечатать {data['article']}', reply_markup=reprint_builder.as_markup())
             await message.answer(f'Заказ {data['article']} выполнен', reply_markup=wb_next_builder.as_markup())
             logging.log(logging.INFO, f'Заказ выполнен.')
-            # remain_msg = await message.answer(f'Осталось обработать товаров {incomplete_prods_count}', reply_markup=next_keyboard())
             await state.clear()
     else:
         await message.reply('Такого штрих-кода в списке нет')
