@@ -66,10 +66,10 @@ async def wb_get_next_order_callback(callback: types.CallbackQuery, state: FSMCo
 Штрих-код: {barcodes[0]}
 Артикул: {orders_list[0]['product']['article']}
 Категория: {orders_list[0]['product']['category']}
-*Количество: {len(orders_list)}*
+Количество: {len(orders_list)}
 '''
     builder = wb_print_barcode(orders_list[0]['product']['id'], len(orders_list))
-    await callback.message.answer_photo(orders_list[0]['product']['photo'], m, parse_mode='MARKDOWN', reply_markup=builder.as_markup())
+    await callback.message.answer_photo(orders_list[0]['product']['photo'], m, reply_markup=builder.as_markup())
     logging.log(logging.INFO, m)
     await state.set_state(WildberriesProcessState.input_barcodes)
 
